@@ -1,0 +1,23 @@
+services:
+
+  fui-api:
+    build: .
+    container_name: fui-api
+
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    ports:
+      - "8008:8008"
+
+    volumes:
+      - ./:/app
+
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    external: true
