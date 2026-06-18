@@ -11,6 +11,7 @@ from app.schemas.fui_analysis import (
     FuiAnalysisResponse
 )
 from datetime import datetime
+from app.utils.workflow import validate_analysis_editable
 
 router = APIRouter(
     prefix="/api",
@@ -21,18 +22,8 @@ router = APIRouter(
 # WORKFLOW VALIDATION
 # =====================================================
 
-EDITABLE_STATUS = [
-    "DRAFT",
-    "SUBMITTED",
-    "REVIEWED"
-]
 
-def validate_analysis_editable(fui: FuiHeader):
-    if fui.status not in EDITABLE_STATUS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Analysis locked because FUI status is {fui.status}"
-        )
+
 
 
 # =====================================================

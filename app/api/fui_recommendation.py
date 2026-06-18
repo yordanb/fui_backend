@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from datetime import datetime
 from app.core.database import get_db
 
 from app.models.fui_header import FuiHeader
@@ -74,7 +75,8 @@ def create_recommendation(
         recommendation_type=payload.recommendation_type,
         instruction=payload.instruction,
         reason=payload.reason,
-        source=payload.source
+        source=payload.source,
+        created_at=datetime.utcnow()
     )
 
     db.add(recommendation)
@@ -84,7 +86,7 @@ def create_recommendation(
     write_audit_log(
         db=db,
         user_id=current_user.id,
-        table_name="fui_recommendations",
+        table_name="fui_recommendation",
         record_id=recommendation.id,
         action="CREATE_RECOMMENDATION",
         old_value=None,
@@ -227,7 +229,7 @@ def update_recommendation(
     write_audit_log(
         db=db,
         user_id=current_user.id,
-        table_name="fui_recommendations",
+        table_name="fui_recommendation",
         record_id=recommendation.id,
         action="UPDATE_RECOMMENDATION",
         old_value=old_values,
