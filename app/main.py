@@ -7,6 +7,7 @@ from app.api.roles import router as roles_router
 from app.api.users import router as users_router
 from app.api import fui
 from app.api.fui_analysis import router as fui_analysis_router
+from app.api.fui_recommendation import router as fui_recommendation_router
 
 app = FastAPI(
     title="FUI Management API",
@@ -22,7 +23,9 @@ app.include_router(
     tags=["FUI"]
 )
 app.include_router(fui_analysis_router)
-
+app.include_router(
+    fui_recommendation_router
+)
 
 @app.get("/")
 def root():

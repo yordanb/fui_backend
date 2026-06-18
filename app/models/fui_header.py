@@ -38,3 +38,9 @@ class FuiHeader(Base):
         back_populates="fui",
         cascade="all, delete-orphan"
     )
+
+    recommendations = relationship(
+        "FuiRecommendation",
+        back_populates="fui",
+        cascade="all, delete-orphan"
+    )
