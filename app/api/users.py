@@ -189,6 +189,8 @@ def update_user_status(
             detail="User not found"
         )
 
+    old_data = {"is_active": user.is_active}
+
     user.is_active = request.is_active
     user.updated_at = datetime.utcnow()
 
