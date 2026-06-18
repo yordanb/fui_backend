@@ -1,31 +1,36 @@
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from typing import Generator
+from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
 from app.core.database import SessionLocal
 from app.core.jwt import decode_access_token
 from app.models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/api/auth/login"
-)
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+security = HTTPBearer()
 
-def get_db():
+# =====================================================
+# DATABASE SESSION
+# =====================================================
+
+def get_db() -> Generator:
     db = SessionLocal()
-
     try:
         yield db
     finally:
         db.close()
 
 
+# =====================================================
+# CURRENT USER
+# =====================================================
+
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
 
+    token = credentials.credentials
     payload = decode_access_token(token)
 
     if not payload:
@@ -54,15 +59,26 @@ def get_current_user(
             detail="User not found"
         )
 
+    # Sprint 1 Active User Validation
+    if not user.is_active:
+        raise HTTPException(
+            status_code=403,
+            detail="User is inactive"
+        )
+
     return user
 
-def require_roles(allowed_roles: List[str]):
+
+# =====================================================
+# ROLE CHECKER
+# =====================================================
+
+def require_roles(*allowed_roles):
 
     def role_checker(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
     ):
-
         from app.models.user_role import UserRole
         from app.models.role import Role
 
@@ -79,14 +95,16 @@ def require_roles(allowed_roles: List[str]):
         )
 
         user_roles = [
-            r.role_name
-            for r in roles
+            row.role_name
+            for row in roles
         ]
 
-        if not any(
+        has_access = any(
             role in user_roles
             for role in allowed_roles
-        ):
+        )
+
+        if not has_access:
             raise HTTPException(
                 status_code=403,
                 detail="Access denied"

@@ -1,5 +1,7 @@
 from datetime import datetime
+
 from app.models.audit_log import AuditLog
+
 
 def write_audit_log(
     db,
@@ -10,10 +12,6 @@ def write_audit_log(
     old_value=None,
     new_value=None
 ):
-    
-    #print(
-    #    f"[AUDIT] {action} {table_name} {record_id}"
-    #)
 
     audit = AuditLog(
         table_name=table_name,
@@ -26,3 +24,6 @@ def write_audit_log(
     )
 
     db.add(audit)
+    db.commit()
+
+    return audit

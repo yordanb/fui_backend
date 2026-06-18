@@ -5,6 +5,8 @@ from app.core.database import engine
 from app.api import auth
 from app.api.roles import router as roles_router
 from app.api.users import router as users_router
+from app.api import fui
+from app.api.fui_analysis import router as fui_analysis_router
 
 app = FastAPI(
     title="FUI Management API",
@@ -14,6 +16,13 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(roles_router)
 app.include_router(users_router)
+app.include_router(
+    fui.router,
+    prefix="/api/fui",
+    tags=["FUI"]
+)
+app.include_router(fui_analysis_router)
+
 
 @app.get("/")
 def root():
