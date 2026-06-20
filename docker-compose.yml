@@ -3,7 +3,6 @@ services:
   fui-api:
     build: .
     container_name: fui-api
-
     restart: unless-stopped
 
     env_file:
@@ -14,6 +13,13 @@ services:
 
     volumes:
       - ./:/app
+
+    healthcheck:
+      test: python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8008/health/db')"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
     networks:
       - backend-network
