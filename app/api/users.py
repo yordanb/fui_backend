@@ -20,6 +20,7 @@ router = APIRouter(
 )
 
 
+# ─── READ: all roles (TE, ADMIN_TE, EXECUTOR) ───
 @router.get(
     "/",
     response_model=list[UserResponse]
@@ -27,10 +28,9 @@ router = APIRouter(
 def get_users(
     db: Session = Depends(get_db),
     current_user=Depends(
-        require_roles(["ADMIN_TE"])
+        require_roles("TE", "ADMIN_TE", "EXECUTOR")
     )
 ):
-
     return (
         db.query(User)
         .order_by(User.username)
@@ -46,10 +46,9 @@ def get_user(
     user_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(
-        require_roles(["ADMIN_TE"])
+        require_roles("TE", "ADMIN_TE", "EXECUTOR")
     )
 ):
-
     user = (
         db.query(User)
         .filter(User.id == user_id)
@@ -65,6 +64,7 @@ def get_user(
     return user
 
 
+# ─── WRITE: TE only ───
 @router.post(
     "/",
     response_model=UserResponse
@@ -73,10 +73,9 @@ def create_user(
     request: UserCreate,
     db: Session = Depends(get_db),
     current_user=Depends(
-        require_roles(["ADMIN_TE"])
+        require_roles("TE")
     )
 ):
-
     existing_user = (
         db.query(User)
         .filter(
@@ -106,17 +105,17 @@ def create_user(
         )
 
     roles = (
-    db.query(Role)
-    .filter(
-        Role.id.in_(request.role_ids)
-    )
-    .all()
+        db.query(Role)
+        .filter(
+            Role.id.in_(request.role_ids)
+        )
+        .all()
     )
 
     if len(roles) != len(request.role_ids):
         raise HTTPException(
-             status_code=400,
-             detail="One or more role IDs are invalid"
+            status_code=400,
+            detail="One or more role IDs are invalid"
         )
 
     user = User(
@@ -135,7 +134,6 @@ def create_user(
     db.flush()
 
     for role_id in request.role_ids:
-
         db.add(
             UserRole(
                 user_id=user.id,
@@ -144,17 +142,17 @@ def create_user(
         )
 
     write_audit_log(
-    db=db,
-    table_name="users",
-    record_id=user.id,
-    action="CREATE",
-    user_id=current_user.id,
-    old_value=None,
-    new_value={
-        "username": user.username,
-        "fullname": user.fullname,
-        "email": user.email,
-        "is_active": user.is_active
+        db=db,
+        table_name="users",
+        record_id=user.id,
+        action="CREATE",
+        user_id=current_user.id,
+        old_value=None,
+        new_value={
+            "username": user.username,
+            "fullname": user.fullname,
+            "email": user.email,
+            "is_active": user.is_active
         }
     )
 
@@ -173,10 +171,9 @@ def update_user_status(
     request: UserStatusUpdate,
     db: Session = Depends(get_db),
     current_user=Depends(
-        require_roles(["ADMIN_TE"])
+        require_roles("TE")
     )
 ):
-
     user = (
         db.query(User)
         .filter(User.id == user_id)
@@ -195,7 +192,7 @@ def update_user_status(
     user.updated_at = datetime.utcnow()
 
     new_data = {
-    "is_active": request.is_active
+        "is_active": request.is_active
     }
 
     action = (
@@ -219,6 +216,7 @@ def update_user_status(
 
     return user
 
+
 @router.put(
     "/{user_id}",
     response_model=UserResponse
@@ -228,10 +226,9 @@ def update_user(
     request: UserUpdate,
     db: Session = Depends(get_db),
     current_user=Depends(
-        require_roles(["ADMIN_TE"])
+        require_roles("TE")
     )
 ):
-
     user = (
         db.query(User)
         .filter(User.id == user_id)
@@ -274,9 +271,9 @@ def update_user(
         )
 
     old_data = {
-    "fullname": user.fullname,
-    "email": user.email,
-    "is_active": user.is_active
+        "fullname": user.fullname,
+        "email": user.email,
+        "is_active": user.is_active
     }
 
     user.fullname = request.fullname
@@ -289,7 +286,6 @@ def update_user(
     ).delete()
 
     for role_id in request.role_ids:
-
         db.add(
             UserRole(
                 user_id=user.id,
@@ -319,18 +315,18 @@ def update_user(
 
     return user
 
+
 @router.put(
     "/{user_id}/password"
 )
 def reset_user_password(
     user_id: int,
     request: UserPasswordReset,
-    db: Session = Depends(get_db),
+    db:    Session = Depends(get_db),
     current_user=Depends(
-        require_roles(["ADMIN_TE"])
+        require_roles("TE")
     )
 ):
-
     user = (
         db.query(User)
         .filter(User.id == user_id)
