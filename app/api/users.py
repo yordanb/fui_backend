@@ -96,6 +96,24 @@ def update_user(user_id: int, request: UserUpdate, db: Session = Depends(get_db)
     return user
 
 
+@router.delete("/{user_id}")
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_roles("TE")),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    db.query(UserRole).filter(UserRole.user_id == user.id).delete()
+    db.delete(user)
+    write_audit_log(db=db, table_name="users", record_id=user.id, action="DELETE", user_id=current_user.id, old_value={"username": user.username}, new_value=None)
+    db.commit()
+    return {"message": "User deleted successfully"}
+
+
 @router.put("/{user_id}/password")
 def reset_user_password(user_id: int, request: UserPasswordReset, db: Session = Depends(get_db), current_user=Depends(require_roles("TE"))):
     user = db.query(User).filter(User.id == user_id).first()
