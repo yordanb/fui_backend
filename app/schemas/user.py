@@ -21,7 +21,7 @@ class UserResponseWithRoles(UserResponse):
 class UserCreate(BaseModel):
     username: str
     fullname: str
-    email: EmailStr
+    email: str
     password: str
     role_ids: List[int]
     is_active: bool = True
