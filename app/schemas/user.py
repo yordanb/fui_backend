@@ -31,9 +31,9 @@ class UserStatusUpdate(BaseModel):
 
 class UserUpdate(BaseModel):
     fullname: str
-    email: EmailStr
+    email: str
     role_ids: List[int]
-    is_active: bool
+    is_active: bool = True
 
 class UserPasswordReset(BaseModel):
     password: str
