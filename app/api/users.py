@@ -124,3 +124,26 @@ def reset_user_password(user_id: int, request: UserPasswordReset, db: Session = 
     write_audit_log(db=db, table_name="users", record_id=user.id, action="RESET_PASSWORD", user_id=current_user.id, old_value=None, new_value=None)
     db.commit()
     return {"message": "Password reset successfully"}
+
+from app.models.user_permission import UserPermission
+from pydantic import BaseModel
+
+class PermissionUpdate(BaseModel):
+    feature_key: str
+    is_enabled: bool
+
+@router.get("/{user_id}/permissions")
+def get_user_permissions(user_id: int, db: Session = Depends(get_db), current_user=Depends(require_roles("TE"))):
+    perms = db.query(UserPermission).filter(UserPermission.user_id == user_id).all()
+    return {p.feature_key: p.is_enabled for p in perms}
+
+@router.put("/{user_id}/permissions")
+def update_user_permissions(user_id: int, request: PermissionUpdate, db: Session = Depends(get_db), current_user=Depends(require_roles("TE"))):
+    perm = db.query(UserPermission).filter(UserPermission.user_id == user_id, UserPermission.feature_key == request.feature_key).first()
+    if not perm:
+        perm = UserPermission(user_id=user_id, feature_key=request.feature_key, is_enabled=request.is_enabled)
+        db.add(perm)
+    else:
+        perm.is_enabled = request.is_enabled
+    db.commit()
+    return {"message": "updated"}
